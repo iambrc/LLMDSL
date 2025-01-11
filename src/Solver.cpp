@@ -391,7 +391,8 @@ void Solver::addConstraints()
 	
 	// Objective Function
 	// Notice that hyperparameters are the weights of area, size error, position error, adjacency error.
-	GRBQuadExpr obj = hyperparameters[0];
+	GRBQuadExpr obj1 = hyperparameters[0], obj2 = 0, obj3 = 0, obj4 = 0;
+	int num2 = 0, num3 = 0, num4 = 0;
 	for (boost::tie(vi, vi_end) = boost::vertices(g); vi != vi_end; ++vi) {
 		bool area_flag = true;
 		boost::graph_traits<SceneGraph>::out_edge_iterator e_out, e_end;
@@ -402,18 +403,20 @@ void Solver::addConstraints()
 			}
 		}
 		if (area_flag)
-			obj -= hyperparameters[0] * l_i[g[*vi].id] * w_i[g[*vi].id] / boundary.size[0] / boundary.size[1];
+			obj1 -= hyperparameters[0] * l_i[g[*vi].id] * w_i[g[*vi].id] / boundary.size[0] / boundary.size[1];
 		if (!g[*vi].target_size.empty()) {
-			obj += hyperparameters[1] * (l_i[g[*vi].id] - g[*vi].target_size[0]) * (l_i[g[*vi].id] - g[*vi].target_size[0]) / boundary.size[0] / boundary.size[0];
-			obj += hyperparameters[1] * (w_i[g[*vi].id] - g[*vi].target_size[1]) * (w_i[g[*vi].id] - g[*vi].target_size[1]) / boundary.size[1] / boundary.size[1];
+			obj2 += hyperparameters[1] * (l_i[g[*vi].id] - g[*vi].target_size[0]) * (l_i[g[*vi].id] - g[*vi].target_size[0]) / boundary.size[0] / boundary.size[0];
+			obj2 += hyperparameters[1] * (w_i[g[*vi].id] - g[*vi].target_size[1]) * (w_i[g[*vi].id] - g[*vi].target_size[1]) / boundary.size[1] / boundary.size[1];
 			if (!floorplan)
-				obj += hyperparameters[1] * (h_i[g[*vi].id] - g[*vi].target_size[2]) * (h_i[g[*vi].id] - g[*vi].target_size[2]) / boundary.size[2] / boundary.size[2];
+				obj2 += hyperparameters[1] * (h_i[g[*vi].id] - g[*vi].target_size[2]) * (h_i[g[*vi].id] - g[*vi].target_size[2]) / boundary.size[2] / boundary.size[2];
+			num2++;
 		}
 		if (!g[*vi].target_pos.empty()) {
-			obj += hyperparameters[2] * (x_i[g[*vi].id] - g[*vi].target_pos[0]) * (x_i[g[*vi].id] - g[*vi].target_pos[0]) / boundary.size[0] / boundary.size[0];
-			obj += hyperparameters[2] * (y_i[g[*vi].id] - g[*vi].target_pos[1]) * (y_i[g[*vi].id] - g[*vi].target_pos[1]) / boundary.size[1] / boundary.size[1];
+			obj3 += hyperparameters[2] * (x_i[g[*vi].id] - g[*vi].target_pos[0]) * (x_i[g[*vi].id] - g[*vi].target_pos[0]) / boundary.size[0] / boundary.size[0];
+			obj3 += hyperparameters[2] * (y_i[g[*vi].id] - g[*vi].target_pos[1]) * (y_i[g[*vi].id] - g[*vi].target_pos[1]) / boundary.size[1] / boundary.size[1];
 			if (!floorplan)
-				obj += hyperparameters[2] * (z_i[g[*vi].id] - g[*vi].target_pos[2]) * (z_i[g[*vi].id] - g[*vi].target_pos[2]) / boundary.size[2] / boundary.size[2];
+				obj3 += hyperparameters[2] * (z_i[g[*vi].id] - g[*vi].target_pos[2]) * (z_i[g[*vi].id] - g[*vi].target_pos[2]) / boundary.size[2] / boundary.size[2];
+			num3++;
 		}
 	}
 	for (boost::tie(ei, ei_end) = boost::edges(g); ei != ei_end; ++ei) {
@@ -426,30 +429,35 @@ void Solver::addConstraints()
 			switch (g[*ei].type)
 			{
 			case LeftOf:
-				obj += hyperparameters[3] * (x_i[g[target].id] - l_i[g[target].id] / 2 - x_i[g[source].id] - l_i[g[source].id] / 2 - g[*ei].distance) *
+				obj4 += hyperparameters[3] * (x_i[g[target].id] - l_i[g[target].id] / 2 - x_i[g[source].id] - l_i[g[source].id] / 2 - g[*ei].distance) *
 					(x_i[g[target].id] - l_i[g[target].id] / 2 - x_i[g[source].id] - l_i[g[source].id] / 2 - g[*ei].distance) / boundary.size[0] / boundary.size[0];
+				num4++;
 				break;
 			case RightOf:
-				obj += hyperparameters[3] * (x_i[g[source].id] - l_i[g[source].id] / 2 - x_i[g[target].id] - l_i[g[target].id] / 2 - g[*ei].distance) *
+				obj4 += hyperparameters[3] * (x_i[g[source].id] - l_i[g[source].id] / 2 - x_i[g[target].id] - l_i[g[target].id] / 2 - g[*ei].distance) *
 					(x_i[g[source].id] - l_i[g[source].id] / 2 - x_i[g[target].id] - l_i[g[target].id] / 2 - g[*ei].distance) / boundary.size[0] / boundary.size[0];
+				num4++;
 				break;
 			case Behind:
-				obj += hyperparameters[3] * (y_i[g[target].id] - w_i[g[target].id] / 2 - y_i[g[source].id] - w_i[g[source].id] / 2 - g[*ei].distance) *
+				obj4 += hyperparameters[3] * (y_i[g[target].id] - w_i[g[target].id] / 2 - y_i[g[source].id] - w_i[g[source].id] / 2 - g[*ei].distance) *
 					(y_i[g[target].id] - w_i[g[target].id] / 2 - y_i[g[source].id] - w_i[g[source].id] / 2 - g[*ei].distance) / boundary.size[1] / boundary.size[1];
+				num4++;
 				break;
 			case FrontOf:
-				obj += hyperparameters[3] * (y_i[g[source].id] - w_i[g[source].id] / 2 - y_i[g[target].id] - w_i[g[target].id] / 2 - g[*ei].distance) *
+				obj4 += hyperparameters[3] * (y_i[g[source].id] - w_i[g[source].id] / 2 - y_i[g[target].id] - w_i[g[target].id] / 2 - g[*ei].distance) *
 					(y_i[g[source].id] - w_i[g[source].id] / 2 - y_i[g[target].id] - w_i[g[target].id] / 2 - g[*ei].distance) / boundary.size[1] / boundary.size[1];
+				num4++;
 				break;
 			default:break;
 			}
 		}
 		if (g[*ei].type == Above || g[*ei].type == Under || g[*ei].type == CloseBy) {
-			obj += hyperparameters[3] * (x_i[g[source].id] - x_i[g[target].id] - offset[0]) * (x_i[g[source].id] - x_i[g[target].id] - offset[0]) / boundary.size[0] / boundary.size[0];
-			obj += hyperparameters[3] * (y_i[g[source].id] - y_i[g[target].id] - offset[1]) * (y_i[g[source].id] - y_i[g[target].id] - offset[1]) / boundary.size[1] / boundary.size[1];
+			obj4 += hyperparameters[3] * (x_i[g[source].id] - x_i[g[target].id] - offset[0]) * (x_i[g[source].id] - x_i[g[target].id] - offset[0]) / boundary.size[0] / boundary.size[0];
+			obj4 += hyperparameters[3] * (y_i[g[source].id] - y_i[g[target].id] - offset[1]) * (y_i[g[source].id] - y_i[g[target].id] - offset[1]) / boundary.size[1] / boundary.size[1];
+			num4++;
 		}
 	}
-	model.setObjective(obj, GRB_MINIMIZE);
+	model.setObjective(obj1 + obj2 / num2 + obj3 / num3 + obj4 / num4, GRB_MINIMIZE);
 }
 
 void Solver::optimizeModel()
