@@ -1,0 +1,10 @@
+{
+    "name": "llmdsl",
+    "version-string": "latest",
+    "dependencies": [
+        "boost-graph",
+        "nlohmann-json",
+        "polyclipping",
+        "clipper2"
+    ]
+}
