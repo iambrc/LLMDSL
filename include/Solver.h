@@ -99,7 +99,6 @@ private:
     void addConstraints();
     void optimizeModel();
     void handleInfeasibleModel();
-    void removeIIS(std::string name);
     void clearModel();
 
     SceneGraph inputGraph, g;

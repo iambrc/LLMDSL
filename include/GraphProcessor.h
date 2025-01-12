@@ -24,8 +24,6 @@ public:
     ~GraphProcessor();
 
     SceneGraph process(const SceneGraph& inputGraph, const Boundary& boundary, std::vector<Obstacles> obstacles);
-    SceneGraph splitGraph4(const SceneGraph& g, const Boundary& boundary);
-    SceneGraph splitGraph2(const SceneGraph& g, const Boundary& boundary);
     void reset();
 
     std::vector<EdgeType> edgetypes;
@@ -36,10 +34,7 @@ public:
     std::vector<std::string> plan_info;
 
 private:
-    bool checkOverlap(std::vector<double> r1, std::vector<double> r2);
-    bool checkInside(std::vector<double> r, std::vector<double> R);
     void removeCycles(SceneGraph& g, EdgeType edge_type);
-    void checkPositionConstraint(SceneGraph& g, const Boundary& boundary, std::vector<Obstacles> obstacles, std::vector<VertexDescriptor>& verticestoremove);
     Orientation oppositeOrientation(Orientation o);
     EdgeType oppositeEdgeType(EdgeType e);
 };

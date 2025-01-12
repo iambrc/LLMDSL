@@ -839,17 +839,19 @@ void Solver::readSceneGraph(const std::string& path, float wallwidth)
 		vp.orientation = vertex["orientation"];
 		vp.size_tolerance = {};
 		vp.pos_tolerance = {};
-		/* Adjust orientation based on target size (NEEDED OR NOT?)
-		if (!vp.target_size.empty()) {
-			vp.size_tolerance = vertex["size_tolerance"].get<std::vector<double>>();
-			if (vp.target_size[0] > vp.target_size[1])
-				vp.orientation = dis(gen) == 0 ? FRONT : BACK;
-			else
-				vp.orientation = dis(gen) == 0 ? LEFT : RIGHT;
-		}
-		*/
 		if (!vp.target_pos.empty()) {
 			vp.pos_tolerance = vertex["pos_tolerance"].get<std::vector<double>>();
+		}
+		if (!vp.target_size.empty()) {
+			vp.size_tolerance = vertex["size_tolerance"].get<std::vector<double>>();
+			if (vp.size_tolerance.empty()) {
+				vp.size_tolerance[0] = vp.target_size[0] * 0.1;
+				vp.size_tolerance[1] = vp.target_size[1] * 0.1;
+				if (vp.on_floor)
+					vp.size_tolerance[2] = 0;
+				else
+					vp.size_tolerance[2] = vp.target_size[2] * 0.1;
+			}
 		}
         auto v = add_vertex(vp, inputGraph);
     }
@@ -884,8 +886,6 @@ void Solver::readSceneGraph(const std::string& path, float wallwidth)
     }
 
     g = graphProcessor.process(inputGraph, boundary, obstacles);
-	if (floorplan)
-    	g = graphProcessor.splitGraph2(g, boundary);
 
 	VertexIterator vi, vi_end;
     for (boost::tie(vi, vi_end) = boost::vertices(g); vi != vi_end; ++vi) {
@@ -957,81 +957,4 @@ void Solver::handleInfeasibleModel() {
         //std::cout << "Constraint " << i << ": " << constrName << std::endl;
     }
 	model.optimize();
-}
-
-void Solver::removeIIS(std::string name) {
-	// Unused Now
-	GRBConstr* constrs = model.getConstrs();
-	int numConstrs = model.get(GRB_IntAttr_NumConstrs);
-	size_t pos1 = name.find_first_of("0123456789");
-	size_t pos2 = name.find_last_of("0123456789");
-	//std::string prefix = name.substr(0, pos1) + name.substr(pos1, pos2 - pos1 + 1);
-	std::string prefix = name.substr(0, pos2 + 1);
-	if (name.find("Inside") != std::string::npos || name.find("NonOverlap") != std::string::npos) {
-		// TODO
-		std::cout << "It's not recommended to remove Inside/NonOverlap constraint." << std::endl;
-	}
-	else if (name.find("Pos_Tolerance") != std::string::npos) {
-		model.remove(model.getConstrByName(prefix + "_x_left"));
-		model.remove(model.getConstrByName(prefix + "_x_right"));
-		model.remove(model.getConstrByName(prefix + "_y_front"));
-		model.remove(model.getConstrByName(prefix + "_y_back"));
-		if (!floorplan) {
-			model.remove(model.getConstrByName(prefix + "_z_bottom"));
-			model.remove(model.getConstrByName(prefix + "_z_top"));
-		}
-		model.update();
-	}
-	else if (name.find("Size_Tolerance") != std::string::npos) {
-		model.remove(model.getConstrByName(prefix + "_l_min"));
-		model.remove(model.getConstrByName(prefix + "_l_max"));
-		model.remove(model.getConstrByName(prefix + "_w_min"));
-		model.remove(model.getConstrByName(prefix + "_w_max"));
-		if (!floorplan) {
-			model.remove(model.getConstrByName(prefix + "_h_min"));
-			model.remove(model.getConstrByName(prefix + "_h_max"));
-		}
-		model.update();
-	}
-	else if (name.find("Boundary") != std::string::npos) {
-		if (name.find("Left") != std::string::npos) {
-			model.remove(model.getConstrByName(prefix + "_Left_eq"));
-			model.remove(model.getConstrByName(prefix + "_Left_ieq"));
-			model.remove(model.getConstrByName(prefix + "_Left_ieqq"));
-		}
-		else if (name.find("Right") != std::string::npos) {
-			model.remove(model.getConstrByName(prefix + "_Right_eq"));
-			model.remove(model.getConstrByName(prefix + "_Right_ieq"));
-			model.remove(model.getConstrByName(prefix + "_Right_ieqq"));
-		}
-		else if (name.find("Front") != std::string::npos) {
-			model.remove(model.getConstrByName(prefix + "_Front_eq"));
-			model.remove(model.getConstrByName(prefix + "_Front_ieq"));
-			model.remove(model.getConstrByName(prefix + "_Front_ieqq"));
-		}
-		else if (name.find("Back") != std::string::npos) {
-			model.remove(model.getConstrByName(prefix + "_Back_eq"));
-			model.remove(model.getConstrByName(prefix + "_Back_ieq"));
-			model.remove(model.getConstrByName(prefix + "_Back_ieqq"));
-		}
-		model.update();
-	}
-	else if (name.find("CloseBy") != std::string::npos) {
-		model.remove(model.getConstrByName(prefix + "ieqa"));
-		model.remove(model.getConstrByName(prefix + "ieqb"));
-		model.remove(model.getConstrByName(prefix + "ieqc"));
-		model.remove(model.getConstrByName(prefix + "ieqd"));
-		model.remove(model.getConstrByName(prefix + "ieqe"));
-		model.update();
-	}
-	else if (name.find("Corner") != std::string::npos) {
-		model.remove(model.getConstrByName(prefix + "eqa"));
-		model.remove(model.getConstrByName(prefix + "eqb"));
-		model.remove(model.getConstrByName(prefix + "eqc"));
-		model.update();
-	}
-	else {
-		model.remove(model.getConstrByName(name));
-		model.update();
-	}
 }
