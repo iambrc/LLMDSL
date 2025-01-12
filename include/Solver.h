@@ -90,7 +90,6 @@ public:
     float getboundaryMaxSize();
     Boundary getboundary() { return boundary; }
 
-    bool floorplan;
     std::vector<double> hyperparameters;
     int scalingFactor;
 private:

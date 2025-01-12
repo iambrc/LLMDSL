@@ -68,10 +68,8 @@ void Solver::addConstraints()
 		y_i[i] = model.addVar(boundary.origin_pos[1], boundary.origin_pos[1] + boundary.size[1], 0.0, GRB_CONTINUOUS, "y_" + std::to_string(i));
 		l_i[i] = model.addVar(0.0, boundary.size[0], 0.0, GRB_CONTINUOUS, "l_" + std::to_string(i));
 		w_i[i] = model.addVar(0.0, boundary.size[1], 0.0, GRB_CONTINUOUS, "w_" + std::to_string(i));
-		if (!floorplan) {
-			z_i[i] = model.addVar(boundary.origin_pos[2], boundary.origin_pos[2] + boundary.size[2], 0.0, GRB_CONTINUOUS, "z_" + std::to_string(i));
-			h_i[i] = model.addVar(0.0, boundary.size[2], 0.0, GRB_CONTINUOUS, "h_" + std::to_string(i));
-		}
+		z_i[i] = model.addVar(boundary.origin_pos[2], boundary.origin_pos[2] + boundary.size[2], 0.0, GRB_CONTINUOUS, "z_" + std::to_string(i));
+		h_i[i] = model.addVar(0.0, boundary.size[2], 0.0, GRB_CONTINUOUS, "h_" + std::to_string(i));
 	}
 	// Inside Constraints & tolerance Constraint
 	VertexIterator vi, vi_end;
@@ -80,40 +78,34 @@ void Solver::addConstraints()
 		model.addConstr(x_i[g[*vi].id] + l_i[g[*vi].id] / 2 <= boundary.origin_pos[0] + boundary.size[0], "Inside_Object_" + std::to_string(g[*vi].id) + "_x_right");
 		model.addConstr(y_i[g[*vi].id] - w_i[g[*vi].id] / 2 >= boundary.origin_pos[1], "Inside_Object_" + std::to_string(g[*vi].id) + "_y_back");
 		model.addConstr(y_i[g[*vi].id] + w_i[g[*vi].id] / 2 <= boundary.origin_pos[1] + boundary.size[1], "Inside_Object_" + std::to_string(g[*vi].id) + "_y_front");
-		if (!floorplan) {
-			model.addConstr(z_i[g[*vi].id] - h_i[g[*vi].id] / 2 >= boundary.origin_pos[2], "Inside_Object_" + std::to_string(g[*vi].id) + "_z_bottom");
-			model.addConstr(z_i[g[*vi].id] + h_i[g[*vi].id] / 2 <= boundary.origin_pos[2] + boundary.size[2], "Inside_Object_" + std::to_string(g[*vi].id) + "_z_top");
-		}
+		model.addConstr(z_i[g[*vi].id] - h_i[g[*vi].id] / 2 >= boundary.origin_pos[2], "Inside_Object_" + std::to_string(g[*vi].id) + "_z_bottom");
+		model.addConstr(z_i[g[*vi].id] + h_i[g[*vi].id] / 2 <= boundary.origin_pos[2] + boundary.size[2], "Inside_Object_" + std::to_string(g[*vi].id) + "_z_top");
 		if (!g[*vi].pos_tolerance.empty() && !g[*vi].target_pos.empty()) {
 			model.addConstr(x_i[g[*vi].id] >= g[*vi].target_pos[0] - g[*vi].pos_tolerance[0], "Pos_Tolerance_Object_" + std::to_string(g[*vi].id) + "_x_left");
 			model.addConstr(x_i[g[*vi].id] <= g[*vi].target_pos[0] + g[*vi].pos_tolerance[0], "Pos_Tolerance_Object_" + std::to_string(g[*vi].id) + "_x_right");
 			model.addConstr(y_i[g[*vi].id] >= g[*vi].target_pos[1] - g[*vi].pos_tolerance[1], "Pos_Tolerance_Object_" + std::to_string(g[*vi].id) + "_y_back");
 			model.addConstr(y_i[g[*vi].id] <= g[*vi].target_pos[1] + g[*vi].pos_tolerance[1], "Pos_Tolerance_Object_" + std::to_string(g[*vi].id) + "_y_front");
-			if (!floorplan) {
-				model.addConstr(z_i[g[*vi].id] >= g[*vi].target_pos[2] - g[*vi].pos_tolerance[2], "Pos_Tolerance_Object_" + std::to_string(g[*vi].id) + "_z_bottom");
-				model.addConstr(z_i[g[*vi].id] <= g[*vi].target_pos[2] + g[*vi].pos_tolerance[2], "Pos_Tolerance_Object_" + std::to_string(g[*vi].id) + "_z_top");
-			}
+			model.addConstr(z_i[g[*vi].id] >= g[*vi].target_pos[2] - g[*vi].pos_tolerance[2], "Pos_Tolerance_Object_" + std::to_string(g[*vi].id) + "_z_bottom");
+			model.addConstr(z_i[g[*vi].id] <= g[*vi].target_pos[2] + g[*vi].pos_tolerance[2], "Pos_Tolerance_Object_" + std::to_string(g[*vi].id) + "_z_top");
 		}
 		if (!g[*vi].size_tolerance.empty() && !g[*vi].target_size.empty()) {
 			model.addConstr(l_i[g[*vi].id] >= g[*vi].target_size[0] - g[*vi].size_tolerance[0], "Size_Tolerance_Object_" + std::to_string(g[*vi].id) + "_l_min");
 			model.addConstr(l_i[g[*vi].id] <= g[*vi].target_size[0] + g[*vi].size_tolerance[0], "Size_Tolerance_Object_" + std::to_string(g[*vi].id) + "_l_max");
 			model.addConstr(w_i[g[*vi].id] >= g[*vi].target_size[1] - g[*vi].size_tolerance[1], "Size_Tolerance_Object_" + std::to_string(g[*vi].id) + "_w_min");
 			model.addConstr(w_i[g[*vi].id] <= g[*vi].target_size[1] + g[*vi].size_tolerance[1], "Size_Tolerance_Object_" + std::to_string(g[*vi].id) + "_w_max");
-			if (!floorplan) {
-				model.addConstr(h_i[g[*vi].id] >= g[*vi].target_size[2] - g[*vi].size_tolerance[2], "Size_Tolerance_Object_" + std::to_string(g[*vi].id) + "_h_min");
-				model.addConstr(h_i[g[*vi].id] <= g[*vi].target_size[2] + g[*vi].size_tolerance[2], "Size_Tolerance_Object_" + std::to_string(g[*vi].id) + "_h_max");
-			}
+			model.addConstr(h_i[g[*vi].id] >= g[*vi].target_size[2] - g[*vi].size_tolerance[2], "Size_Tolerance_Object_" + std::to_string(g[*vi].id) + "_h_min");
+			model.addConstr(h_i[g[*vi].id] <= g[*vi].target_size[2] + g[*vi].size_tolerance[2], "Size_Tolerance_Object_" + std::to_string(g[*vi].id) + "_h_max");
 		}
 	}
 	// On floor Constraints
 	for (boost::tie(vi, vi_end) = boost::vertices(g); vi != vi_end; ++vi) {
-		if (g[*vi].on_floor && !floorplan) {
+		if (g[*vi].on_floor) {
 			model.addConstr(z_i[g[*vi].id] == boundary.origin_pos[2] + h_i[g[*vi].id] / 2, "On_Floor_Object_" + std::to_string(g[*vi].id));
 		}
 	}
 	// Hanging Constraints
 	for (boost::tie(vi, vi_end) = boost::vertices(g); vi != vi_end; ++vi) {
-		if (g[*vi].hanging && !floorplan) {
+		if (g[*vi].hanging) {
 			model.addConstr(z_i[g[*vi].id] == boundary.origin_pos[2] + boundary.size[2] - h_i[g[*vi].id] / 2, "Hanging_Object_" + std::to_string(g[*vi].id));
 		}
 	}
@@ -212,21 +204,15 @@ void Solver::addConstraints()
 				model.addConstr(y_i[g[*vi].id] + w_i[g[*vi].id] / 2 <= y_i[g[*vj].id] - w_i[g[*vj].id] / 2 + 
 					M * (1 - sigma_B[g[*vi].id][g[*vj].id]), "NonOverlap_Object_" + std::to_string(g[*vi].id) + "and_Object_" + std::to_string(g[*vj].id) + "B");
 
-				if (!floorplan) {
-					sigma_U[g[*vi].id][g[*vj].id] = model.addVar(0, 1, 0, GRB_BINARY);
-					sigma_D[g[*vi].id][g[*vj].id] = model.addVar(0, 1, 0, GRB_BINARY);
-					model.addConstr(z_i[g[*vi].id] - h_i[g[*vi].id] / 2 >= z_i[g[*vj].id] + h_i[g[*vj].id] / 2 -
-						M * (1 - sigma_U[g[*vi].id][g[*vj].id]), "NonOverlap_Object_" + std::to_string(g[*vi].id) + "and_Object_" + std::to_string(g[*vj].id) + "U");
-					model.addConstr(z_i[g[*vi].id] + h_i[g[*vi].id] / 2 <= z_i[g[*vj].id] - h_i[g[*vj].id] / 2 +
-						M * (1 - sigma_D[g[*vi].id][g[*vj].id]), "NonOverlap_Object_" + std::to_string(g[*vi].id) + "and_Object_" + std::to_string(g[*vj].id) + "D");
-					model.addConstr(sigma_L[g[*vi].id][g[*vj].id] + sigma_R[g[*vi].id][g[*vj].id] +
-						sigma_F[g[*vi].id][g[*vj].id] + sigma_B[g[*vi].id][g[*vj].id] +
-						sigma_U[g[*vi].id][g[*vj].id] + sigma_D[g[*vi].id][g[*vj].id] >= 1, "NonOverlap_Object_" + std::to_string(g[*vi].id) + "and_Object_" + std::to_string(g[*vj].id));
-				}
-				else {
-					model.addConstr(sigma_L[g[*vi].id][g[*vj].id] + sigma_R[g[*vi].id][g[*vj].id] +
-						sigma_F[g[*vi].id][g[*vj].id] + sigma_B[g[*vi].id][g[*vj].id] >= 1, "NonOverlap_Object_" + std::to_string(g[*vi].id) + "and_Object_" + std::to_string(g[*vj].id));
-				}
+				sigma_U[g[*vi].id][g[*vj].id] = model.addVar(0, 1, 0, GRB_BINARY);
+				sigma_D[g[*vi].id][g[*vj].id] = model.addVar(0, 1, 0, GRB_BINARY);
+				model.addConstr(z_i[g[*vi].id] - h_i[g[*vi].id] / 2 >= z_i[g[*vj].id] + h_i[g[*vj].id] / 2 -
+					M * (1 - sigma_U[g[*vi].id][g[*vj].id]), "NonOverlap_Object_" + std::to_string(g[*vi].id) + "and_Object_" + std::to_string(g[*vj].id) + "U");
+				model.addConstr(z_i[g[*vi].id] + h_i[g[*vi].id] / 2 <= z_i[g[*vj].id] - h_i[g[*vj].id] / 2 +
+					M * (1 - sigma_D[g[*vi].id][g[*vj].id]), "NonOverlap_Object_" + std::to_string(g[*vi].id) + "and_Object_" + std::to_string(g[*vj].id) + "D");
+				model.addConstr(sigma_L[g[*vi].id][g[*vj].id] + sigma_R[g[*vi].id][g[*vj].id] +
+					sigma_F[g[*vi].id][g[*vj].id] + sigma_B[g[*vi].id][g[*vj].id] +
+					sigma_U[g[*vi].id][g[*vj].id] + sigma_D[g[*vi].id][g[*vj].id] >= 1, "NonOverlap_Object_" + std::to_string(g[*vi].id) + "and_Object_" + std::to_string(g[*vj].id));
 			}
 		}
 	}
@@ -254,17 +240,14 @@ void Solver::addConstraints()
 				M * (1 - sigma_oF[g[*vi].id][i]), "NonOverlap_Object_" + std::to_string(g[*vi].id) + "and_Obstacle_" + std::to_string(i) + "F");
 			sigma_o += sigma_oF[g[*vi].id][i];
 
-			if (!floorplan) {
-				sigma_oD[g[*vi].id][i] = model.addVar(0, 1, 0, GRB_BINARY);
-				model.addConstr(z_i[g[*vi].id] + h_i[g[*vi].id] / 2 <= obstacles[i].pos[2] - obstacles[i].size[2] / 2 +
-					M * (1 - sigma_oD[g[*vi].id][i]), "NonOverlap_Object_" + std::to_string(g[*vi].id) + "and_Obstacle_" + std::to_string(i) + "D");
-				sigma_o += sigma_oD[g[*vi].id][i];
-
-				sigma_oU[g[*vi].id][i] = model.addVar(0, 1, 0, GRB_BINARY);
-				model.addConstr(z_i[g[*vi].id] - h_i[g[*vi].id] / 2 >= obstacles[i].pos[2] + obstacles[i].size[2] / 2 -
-					M * (1 - sigma_oU[g[*vi].id][i]), "NonOverlap_Object_" + std::to_string(g[*vi].id) + "and_Obstacle_" + std::to_string(i) + "U");
-				sigma_o += sigma_oU[g[*vi].id][i];
-			}
+			sigma_oD[g[*vi].id][i] = model.addVar(0, 1, 0, GRB_BINARY);
+			model.addConstr(z_i[g[*vi].id] + h_i[g[*vi].id] / 2 <= obstacles[i].pos[2] - obstacles[i].size[2] / 2 +
+				M * (1 - sigma_oD[g[*vi].id][i]), "NonOverlap_Object_" + std::to_string(g[*vi].id) + "and_Obstacle_" + std::to_string(i) + "D");
+			sigma_o += sigma_oD[g[*vi].id][i];
+			sigma_oU[g[*vi].id][i] = model.addVar(0, 1, 0, GRB_BINARY);
+			model.addConstr(z_i[g[*vi].id] - h_i[g[*vi].id] / 2 >= obstacles[i].pos[2] + obstacles[i].size[2] / 2 -
+				M * (1 - sigma_oU[g[*vi].id][i]), "NonOverlap_Object_" + std::to_string(g[*vi].id) + "and_Obstacle_" + std::to_string(i) + "U");
+			sigma_o += sigma_oU[g[*vi].id][i];
 			model.addConstr(sigma_o >= 1, "NonOverlap_Object_" + std::to_string(g[*vi].id) + "and_Obstacle_" + std::to_string(i));	
 		}
 	}
@@ -301,19 +284,6 @@ void Solver::addConstraints()
 			default:break;
 			}
 		}
-	}
-	// Floor Plan Constraints :AREA
-	if (floorplan)
-	{
-		GRBQuadExpr total_area = 0;
-		double unuse_area = boundary.size[0] * boundary.size[1];
-		for (boost::tie(vi, vi_end) = boost::vertices(g); vi != vi_end; ++vi) {
-			total_area += l_i[g[*vi].id] * w_i[g[*vi].id];
-		}
-		for (int i = 0; i < num_obstacles; ++i) {
-			unuse_area -= obstacles[i].size[0] * obstacles[i].size[1];
-		}
-		model.addQConstr(total_area == unuse_area, "Area_Constraint_for_FloorPlan");
 	}
 	// Corner Constraints
 	std::vector<std::vector<GRBVar>> cor(num_vertices);
@@ -407,15 +377,13 @@ void Solver::addConstraints()
 		if (!g[*vi].target_size.empty()) {
 			obj2 += hyperparameters[1] * (l_i[g[*vi].id] - g[*vi].target_size[0]) * (l_i[g[*vi].id] - g[*vi].target_size[0]) / boundary.size[0] / boundary.size[0];
 			obj2 += hyperparameters[1] * (w_i[g[*vi].id] - g[*vi].target_size[1]) * (w_i[g[*vi].id] - g[*vi].target_size[1]) / boundary.size[1] / boundary.size[1];
-			if (!floorplan)
-				obj2 += hyperparameters[1] * (h_i[g[*vi].id] - g[*vi].target_size[2]) * (h_i[g[*vi].id] - g[*vi].target_size[2]) / boundary.size[2] / boundary.size[2];
+			obj2 += hyperparameters[1] * (h_i[g[*vi].id] - g[*vi].target_size[2]) * (h_i[g[*vi].id] - g[*vi].target_size[2]) / boundary.size[2] / boundary.size[2];
 			num2++;
 		}
 		if (!g[*vi].target_pos.empty()) {
 			obj3 += hyperparameters[2] * (x_i[g[*vi].id] - g[*vi].target_pos[0]) * (x_i[g[*vi].id] - g[*vi].target_pos[0]) / boundary.size[0] / boundary.size[0];
 			obj3 += hyperparameters[2] * (y_i[g[*vi].id] - g[*vi].target_pos[1]) * (y_i[g[*vi].id] - g[*vi].target_pos[1]) / boundary.size[1] / boundary.size[1];
-			if (!floorplan)
-				obj3 += hyperparameters[2] * (z_i[g[*vi].id] - g[*vi].target_pos[2]) * (z_i[g[*vi].id] - g[*vi].target_pos[2]) / boundary.size[2] / boundary.size[2];
+			obj3 += hyperparameters[2] * (z_i[g[*vi].id] - g[*vi].target_pos[2]) * (z_i[g[*vi].id] - g[*vi].target_pos[2]) / boundary.size[2] / boundary.size[2];
 			num3++;
 		}
 	}
@@ -464,24 +432,16 @@ void Solver::optimizeModel()
 {
     try {
         model.set(GRB_DoubleParam_TimeLimit, 10);
-		if (floorplan)
-        	model.set(GRB_DoubleParam_MIPGap, 0.11);
-		else
-			model.set(GRB_DoubleParam_MIPGap, 0.01);
+		model.set(GRB_DoubleParam_MIPGap, 0.01);
 		model.set(GRB_IntParam_MIPFocus, 1);
         model.set(GRB_IntParam_Method, 2);
         model.set(GRB_DoubleParam_BarConvTol, 1e-4);
         model.set(GRB_IntParam_Cuts, 2);
         model.set(GRB_IntParam_Presolve, 0);
         model.optimize();
-		int iter = 0;
-        while (model.get(GRB_IntAttr_Status) == GRB_INFEASIBLE && iter < 3) {
-            //model.computeIIS();
-            //model.write("model.ilp");
-            //std::cout << "Infeasible constraints written to 'model.ilp'" << std::endl;
+        while (model.get(GRB_IntAttr_Status) == GRB_INFEASIBLE) {
 			std::cout << "Model is infeasible. Calling IIS computation..." << std::endl;
             handleInfeasibleModel();
-			iter++;
         }
 
 		if (graphProcessor.conflict_info.empty()) {
@@ -512,19 +472,12 @@ void Solver::optimizeModel()
 				varValue = model.getVarByName(varName).get(GRB_DoubleAttr_X);
 				g[*vi1].size[1] = varValue;
 
-        	    if (!floorplan) {
-        	        varName = "z_" + std::to_string(g[*vi1].id);
-        	        varValue = model.getVarByName(varName).get(GRB_DoubleAttr_X);
-        	        g[*vi1].pos[2] = varValue;
-
-        	        varName = "h_" + std::to_string(g[*vi1].id);
-        	        varValue = model.getVarByName(varName).get(GRB_DoubleAttr_X);
-        	        g[*vi1].size[2] = varValue;
-        	    }
-        	    else {
-					g[*vi1].pos[2] = g[*vi1].target_size[2] / 2;
-					g[*vi1].size[2] = g[*vi1].target_size[2];
-        	    }
+        	    varName = "z_" + std::to_string(g[*vi1].id);
+        	    varValue = model.getVarByName(varName).get(GRB_DoubleAttr_X);
+        	    g[*vi1].pos[2] = varValue;
+        	    varName = "h_" + std::to_string(g[*vi1].id);
+        	    varValue = model.getVarByName(varName).get(GRB_DoubleAttr_X);
+        	    g[*vi1].size[2] = varValue;
         	}
         	std::cout << "Value of objective function: " << model.get(GRB_DoubleAttr_ObjVal) << std::endl;
 		}
@@ -650,8 +603,6 @@ void Solver::readSceneGraph(const std::string& path, float wallwidth)
     nlohmann::json scene_graph_json;
     file >> scene_graph_json;
 
-	floorplan = scene_graph_json["floorplan"];
-
     // Parse JSON to set boundary
     boundary.origin_pos = scene_graph_json["boundary"]["origin_pos"].get<std::vector<double>>();
     boundary.size = scene_graph_json["boundary"]["size"].get<std::vector<double>>();
@@ -659,35 +610,32 @@ void Solver::readSceneGraph(const std::string& path, float wallwidth)
 	// calculate orientations
     boundary.Orientations = std::vector<Orientation>(boundary.points.size(), FRONT);
 	
-	if (!floorplan)
-	{
-		boundary.origin_pos[0] += wallwidth / 2; boundary.origin_pos[1] += wallwidth / 2;
-		boundary.size[0] -= wallwidth; boundary.size[1] -= wallwidth;
-		ClipperLib::Path boundaryp;
-		ClipperLib::Paths solu;
-		for (const auto& point : boundary.points) {
-			boundaryp.push_back({ (int)(point[0] * std::pow(10, scalingFactor)), (int)(point[1] * std::pow(10, scalingFactor)) });
-		}
-		ClipperLib::ClipperOffset co;
-		co.AddPath(boundaryp, ClipperLib::jtMiter, ClipperLib::etClosedPolygon);
-		co.Execute(solu, -(wallwidth / 2) * std::pow(10, scalingFactor));
-		std::vector<std::vector<double>> new_points = {};
-		for (const auto& point : solu[0]) {
-			new_points.push_back({point.X / std::pow(10, scalingFactor), point.Y / std::pow(10, scalingFactor)});
-		}
-		int idx_ = 0;
-		for (auto i = 0; i < new_points.size(); ++i)
-		{
-			if (std::fabs(std::fabs(new_points[i][0] - boundary.points[0][0]) - wallwidth / 2) < 1e-3 
-			&& std::fabs(std::fabs(new_points[i][1] - boundary.points[0][1]) - wallwidth / 2) < 1e-3)
-			{
-				idx_ = i;
-				break;
-			}
-		}
-		for (auto i = 0; i < new_points.size(); ++i)
-			boundary.points[i] = new_points[(i + idx_) % new_points.size()];
+	boundary.origin_pos[0] += wallwidth / 2; boundary.origin_pos[1] += wallwidth / 2;
+	boundary.size[0] -= wallwidth; boundary.size[1] -= wallwidth;
+	ClipperLib::Path boundaryp;
+	ClipperLib::Paths solu;
+	for (const auto& point : boundary.points) {
+		boundaryp.push_back({ (int)(point[0] * std::pow(10, scalingFactor)), (int)(point[1] * std::pow(10, scalingFactor)) });
 	}
+	ClipperLib::ClipperOffset co;
+	co.AddPath(boundaryp, ClipperLib::jtMiter, ClipperLib::etClosedPolygon);
+	co.Execute(solu, -(wallwidth / 2) * std::pow(10, scalingFactor));
+	std::vector<std::vector<double>> new_points = {};
+	for (const auto& point : solu[0]) {
+		new_points.push_back({point.X / std::pow(10, scalingFactor), point.Y / std::pow(10, scalingFactor)});
+	}
+	int idx_ = 0;
+	for (auto i = 0; i < new_points.size(); ++i)
+	{
+		if (std::fabs(std::fabs(new_points[i][0] - boundary.points[0][0]) - wallwidth / 2) < 1e-3 
+		&& std::fabs(std::fabs(new_points[i][1] - boundary.points[0][1]) - wallwidth / 2) < 1e-3)
+		{
+			idx_ = i;
+			break;
+		}
+	}
+	for (auto i = 0; i < new_points.size(); ++i)
+		boundary.points[i] = new_points[(i + idx_) % new_points.size()];
 	
 	for (auto i = 0; i < boundary.points.size(); ++i) {
         // Get the current edge
@@ -816,10 +764,8 @@ void Solver::readSceneGraph(const std::string& path, float wallwidth)
 		double maxY = std::max({path[0].Y, path[1].Y, path[2].Y, path[3].Y});
 		ob_from_boundary.pos = {(minX + maxX) / 2.0 / std::pow(10, scalingFactor), (minY + maxY)/ 2.0 / std::pow(10, scalingFactor), boundary.size[2] / 2.0};
 		ob_from_boundary.size = {(maxX - minX) / std::pow(10, scalingFactor), (maxY - minY)/ std::pow(10, scalingFactor), boundary.size[2]};
-		if (!floorplan) {
-			ob_from_boundary.size[0] += wallwidth;
-			ob_from_boundary.size[1] += wallwidth;
-		}
+		ob_from_boundary.size[0] += wallwidth;
+		ob_from_boundary.size[1] += wallwidth;
 		obstacles.push_back(ob_from_boundary);
     }
     // Parse JSON to set vertices

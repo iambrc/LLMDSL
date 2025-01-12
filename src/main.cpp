@@ -18,6 +18,7 @@ int main(int argc, char *argv[]) {
 
     Solver solver;
     solver.hyperparameters = {param1, param2, param3, param4};
+    // wallwidth 0.0f
     solver.readSceneGraph(json_name, 0.0f);
     solver.solve();
 
