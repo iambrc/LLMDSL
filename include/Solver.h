@@ -5,7 +5,6 @@
 #include <fstream>
 #include <gurobi_c++.h>
 #include <nlohmann/json.hpp>
-#include <polyclipping/clipper.hpp>
 
 extern std::vector<std::string> show_edges;
 extern std::vector<std::string> show_orientations;
@@ -84,14 +83,10 @@ public:
 
     void solve();
     void saveGraph();
-    void readSceneGraph(const std::string& path, float wallwidth);
+    void readSceneGraph(const std::string& path);
     void reset();
-    SceneGraph getsolution() { return g; }
-    float getboundaryMaxSize();
-    Boundary getboundary() { return boundary; }
 
     std::vector<double> hyperparameters;
-    int scalingFactor;
 private:
     bool has_path(const SceneGraph& g, VertexDescriptor start, VertexDescriptor target);
     bool dfs_check_path(const SceneGraph& g, VertexDescriptor u, VertexDescriptor target, EdgeType required_type, std::vector<bool>& visited);
@@ -102,9 +97,6 @@ private:
 
     SceneGraph inputGraph, g;
     Boundary boundary;
-    std::vector<Obstacles> obstacles;
-    std::vector<Doors> doors;
-    std::vector<Windows> windows;
     GraphProcessor graphProcessor;
 
     GRBEnv env;

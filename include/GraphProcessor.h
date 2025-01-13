@@ -23,7 +23,7 @@ public:
     GraphProcessor();
     ~GraphProcessor();
 
-    SceneGraph process(const SceneGraph& inputGraph, const Boundary& boundary, std::vector<Obstacles> obstacles);
+    SceneGraph process(const SceneGraph& inputGraph, const Boundary& boundary);
     void reset();
 
     std::vector<EdgeType> edgetypes;

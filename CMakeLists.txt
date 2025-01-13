@@ -20,8 +20,6 @@ set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.c
 set(CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/vcpkg_installed/x64-windows")
 find_package(boost_graph REQUIRED CONFIG PATHS CMAKE_PREFIX_PATH)
 find_package(nlohmann_json CONFIG REQUIRED PATHS CMAKE_PREFIX_PATH)
-find_package(Clipper2 CONFIG REQUIRED PATHS CMAKE_PREFIX_PATH)
-find_package(polyclipping CONFIG REQUIRED PATHS CMAKE_PREFIX_PATH)
 
 # set include
 include_directories(${CMAKE_SOURCE_DIR}/include)
@@ -36,4 +34,4 @@ add_executable(LLMDSL ${GUI_SOURCES} ${SOLVER_SOURCES} ${VIEW_SOURCES} ${SHADER_
 
 # link libraries
 target_link_libraries(LLMDSL PRIVATE ${catkin_LIBRARIES} ${GUROBI_LIBRARIES})
-target_link_libraries(LLMDSL PRIVATE Boost::graph nlohmann_json::nlohmann_json Clipper2::Clipper2 polyclipping::polyclipping)
+target_link_libraries(LLMDSL PRIVATE Boost::graph nlohmann_json::nlohmann_json)

@@ -70,7 +70,7 @@ void GraphProcessor::removeCycles(SceneGraph& g, EdgeType edge_type) {
     
 }
 
-SceneGraph GraphProcessor::process(const SceneGraph& inputGraph, const Boundary& boundary, std::vector<Obstacles> obstacles)
+SceneGraph GraphProcessor::process(const SceneGraph& inputGraph, const Boundary& boundary)
 {
     SceneGraph outputGraph = inputGraph;
     // Find and work with rings in each type of edge
