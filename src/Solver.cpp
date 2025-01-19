@@ -382,7 +382,13 @@ void Solver::addConstraints()
 			num4++;
 		}
 	}
-	model.setObjective(obj1 + obj2 / num2 + obj3 / num3 + obj4 / num4, GRB_MINIMIZE);
+	if (num2 > 0)
+		obj2 /= num2;
+	if (num3 > 0)
+		obj3 /= num3;
+	if (num4 > 0)
+		obj4 /= num4;
+	model.setObjective(obj1 + obj2 + obj3 + obj4, GRB_MINIMIZE);
 }
 
 void Solver::optimizeModel()
